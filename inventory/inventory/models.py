@@ -39,7 +39,7 @@ class Product(AbstractBase):
       return None
 
 class Supplier(AbstractBase):
-  name = models.CharField(max_legth=100),
+  name = models.CharField(max_length=100),
   phone = models.CharField(max_length=255),
   email = models.EmailField(max_length=255),
   address = models.TextField(blank=True)
@@ -53,3 +53,13 @@ class Supplier(AbstractBase):
     except:
       return None
 
+class Purchase(AbstractBase):
+  supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase')
+  item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='purchase')
+  quantity = models.PositiveIntegerField()
+  price = models.DecimalField(max_digits=10, decimal_places=2)
+  date = models.DateField()
+
+  @property
+  def total_price(self):
+    return self.item.name
