@@ -1,65 +1,71 @@
 from django.db import models
 
 class AbstractBase(models.Model):
-  id = models.BigAutoField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
+    class Meta:
+        abstract = True
 
-  class Meta:
-    abstract = True
-
-class Item(AbstractBase):
-  name = models.CharField(max_length=100)
-  description = models.TextField(blank=True)
-  price = models.DecimalField(max_digits=10, decimal_places=2)
-  quantity = models.PositiveIntegerField()
-
-class Brand(AbstractBase):
-  name = models.CharField(max_length=100),
-  description = models.TextField(blank=True),
-  image = models.ImageField(upload_to='brand_images', blank=True)
-  item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='brand')
-  
-  @property
-  def item_name(self):
-    try:
-      return self.item.name
-    except:
-      return None
-
-class Product(AbstractBase):
-  name = models.CharField(max_length=100),
-  description = models.TextField(blank=True),
-  image = models.ImageField(upload_to='product_images', blank=True)
-  brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='product')
-  
-  @property
-  def brand_name(self):
-    try:
-      return self.brand.name
-    except:
-      return None
+class User(AbstractBase):
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True)
+    role = models.CharField(max_length=20)
 
 class Supplier(AbstractBase):
-  name = models.CharField(max_length=100),
-  phone = models.CharField(max_length=255),
-  email = models.EmailField(max_length=255),
-  address = models.TextField(blank=True)
+    name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField()
+    address = models.TextField()
 
-  item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='supplier')
+class Brand(AbstractBase):
+    name = models.CharField(max_length=255)
 
-  @property
-  def item_name(self):
-    try:
-      return self.item.name
-    except:
-      return None
+    @property
+    def item_name(self):
+        try:
+            return self.product_set.first().name
+        except:
+            return None
 
-class Purchase(AbstractBase):
-  supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase')
-  item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='purchase')
-  quantity = models.PositiveIntegerField()
-  price = models.DecimalField(max_digits=10, decimal_places=2)
-  date = models.DateField()
+class Product(AbstractBase):
+    name = models.CharField(max_length=255)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
 
-  @property
-  def total_price(self):
-    return self.item.name
+class Item(AbstractBase):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class PurchaseOrder(AbstractBase):
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    order_date = models.DateField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+class PurchaseOrderItem(AbstractBase):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class CustomerOrder(AbstractBase):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    order_date = models.DateField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+class CustomerOrderItem(AbstractBase):
+    customer_order = models.ForeignKey(CustomerOrder, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class Transaction(AbstractBase):
+    order = models.ForeignKey(CustomerOrder, on_delete=models.CASCADE)
+    transaction_date = models.DateField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=20)
+
+    @property
+    def id(self):
+        return self.pk
